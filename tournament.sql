@@ -9,18 +9,18 @@
 --First create database tournament to hold Players and Matches table.
 create database tournament;
 
+\c tournament
+
 --Create table players to hold Player data including id and name. Primary key is player_id.
 create table Players (
-player_id serial,
-player_name text,
-primary key(player_id));
+player_id serial primary key, 
+player_name text NOT NULL);
 
 --Create table matches to hold Match data including players' ids and the winner's player_id.
 --Primay key is match_id. For data integrity this table references players table on player ids.
 create table Matches (
 match_id serial primary key,
-player_id_1 INTEGER REFERENCES players,
-player_id_2 INTEGER REFERENCES players,
-winner_id INTEGER REFERENCES players)
+winner_id INTEGER REFERENCES Players,
+loser_id INTEGER REFERENCES Players);
 
 

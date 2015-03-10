@@ -88,7 +88,7 @@ def playerStandings():
     cur = DB.cursor()
 # Gather standings records
     cur.execute("""SELECT p.player_id as id , p.player_name as name ,sum(case when m.winner_id = p.player_id then 1 else 0 end) as wins, count(m.match_id) as matches 
-        FROM players p left join matches m ON p.player_id in (m.player_id_1, m.player_id_2) 
+        FROM players p left join matches m ON p.player_id in (m.winner_id, m.loser_id) 
         GROUP BY p.player_id ORDER BY matches DESC""")
     standings = cur.fetchall()      
 
@@ -111,7 +111,10 @@ def reportMatch(winner, loser):
     cur = DB.cursor()
 
 # Insert player data
-    cur.execute("insert into Matches (player_id_1,player_id_2,winner_id) values (%s,%s,%s)",(cleanedWinner,cleanedLoser,cleanedWinner))
+    sql = "insert into Matches (winner_id,loser_id) values (%s,%s)"
+    args= cleanedWinner, cleanedLoser
+    cur.execute(sql, args)
+
     DB.commit()
     DB.close()
  
@@ -137,20 +140,20 @@ def swissPairings():
     cur.execute("""SELECT r.id as id1 , r.name as name1 ,s.id as id2 , s.name as name2 
         FROM 
         (SELECT distinct p.player_id as id , p.player_name as name ,sum(case when m.winner_id = p.player_id then 1 else 0 end) as wins, count(m.match_id) as matches 
-            FROM players p left join matches m ON p.player_id in (m.player_id_1, m.player_id_2)  
+            FROM players p left join matches m ON p.player_id in (m.winner_id, m.loser_id)  
             group by p.player_id having sum(case when m.winner_id = p.player_id then 1 else 0 end) = 0 ORDER BY wins DESC) r, 
         (SELECT distinct p.player_id as id , p.player_name as name ,sum(case when m.winner_id = p.player_id then 1 else 0 end) as wins, count(m.match_id) as matches 
-            FROM players p left join matches m ON p.player_id in (m.player_id_1, m.player_id_2)  
+            FROM players p left join matches m ON p.player_id in (m.winner_id, m.loser_id)  
             group by p.player_id having sum(case when m.winner_id = p.player_id then 1 else 0 end) = 0 ORDER BY wins DESC) s 
             where s.wins = r.wins and r.id<s.id 
          union 
             SELECT r.id as id1 , r.name as name1 ,s.id as id2 , s.name as name2 
          FROM 
          (SELECT distinct p.player_id as id , p.player_name as name ,sum(case when m.winner_id = p.player_id then 1 else 0 end) as wins, count(m.match_id) as matches 
-            FROM players p left join matches m ON p.player_id in (m.player_id_1, m.player_id_2) 
+            FROM players p left join matches m ON p.player_id in (m.winner_id, m.loser_id) 
             group by p.player_id having sum(case when m.winner_id = p.player_id then 1 else 0 end) = 1 ORDER BY wins DESC) r, 
          (SELECT distinct p.player_id as id , p.player_name as name ,sum(case when m.winner_id = p.player_id then 1 else 0 end) as wins, count(m.match_id) as matches 
-            FROM players p left join matches m ON p.player_id in (m.player_id_1, m.player_id_2) 
+            FROM players p left join matches m ON p.player_id in (m.winner_id, m.loser_id) 
             group by p.player_id  having sum(case when m.winner_id = p.player_id then 1 else 0 end) = 1 ORDER BY wins DESC) s where s.wins = r.wins and r.id<s.id;""")
 
     pairings = cur.fetchall()      
